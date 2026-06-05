@@ -1,7 +1,14 @@
 import sys
 
 from PyQt6.QtCore import QSize, QUrl, Qt
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QPushButton, QGridLayout
+from PyQt6.QtWidgets import (
+    QApplication,
+    QMainWindow,
+    QWidget,
+    QPushButton,
+    QGridLayout,
+    QSlider,
+)
 from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PyQt6.QtMultimediaWidgets import QVideoWidget
 
@@ -14,6 +21,10 @@ class VideoPlayer(QMainWindow):
         self.init_window()
         self.init_player()
         self.init_buttons()
+        self.init_slider()
+
+        self.debug()
+
         self.init_main_widget()
 
     def init_window(self):
@@ -22,7 +33,7 @@ class VideoPlayer(QMainWindow):
 
     def init_player(self):
         self.media_player = QMediaPlayer()
-        self.media_player.setSource(QUrl.fromLocalFile("video.mp4"))
+        self.media_player.setSource(QUrl.fromLocalFile(r"VideoPlayer\video.mp4"))
 
         self.video_widget = QVideoWidget()
         self.media_player.setVideoOutput(self.video_widget)
@@ -43,20 +54,29 @@ class VideoPlayer(QMainWindow):
         pause_button.setFixedSize(QSize(100, 30))
         self.pause_button = pause_button
 
+    def init_slider(self):
+        slider = QSlider(Qt.Orientation.Horizontal)
+
+        self.media_player.durationChanged.connect(
+            lambda: slider.setRange(0, self.media_player.duration())
+        )
+
+        slider.valueChanged.connect(
+            lambda: self.media_player.setPosition(slider.value())
+        )
+
+        self.position_slider = slider
+
     def init_main_widget(self):
 
         layout = QGridLayout()
         layout.addWidget(self.video_widget, 0, 0, 1, 2)
-        layout.addWidget(self.play_button, 1, 0, Qt.AlignmentFlag.AlignHCenter)
-        layout.addWidget(self.pause_button, 1, 1, Qt.AlignmentFlag.AlignHCenter)
+        layout.addWidget(self.play_button, 2, 0, Qt.AlignmentFlag.AlignRight)
+        layout.addWidget(self.pause_button, 2, 1, Qt.AlignmentFlag.AlignLeft)
+        layout.addWidget(self.position_slider, 1, 0, 1, 2)
 
-        #### testing
-        button = QPushButton()
-        button.setText("debug")
-
-        button.clicked.connect(lambda: self.get_info())
-
-        layout.addWidget(button, 2, 0)
+        #### debug
+        # layout.addWidget(self.debug_button, 3, 0)
         ####
 
         container = QWidget()
@@ -64,10 +84,17 @@ class VideoPlayer(QMainWindow):
 
         self.setCentralWidget(container)
 
-    def get_info(self):
+    def debug(self):
+        button = QPushButton()
+        button.setText("debug")
 
-        # time frame in milliseconds
-        print(f"{self.media_player.position()}/{self.media_player.duration()}")
+        button.clicked.connect(
+            lambda: print(
+                f"{self.media_player.position()}/{self.media_player.duration()}"
+            )
+        )
+
+        self.debug_button = button
 
 
 def main():
