@@ -38,9 +38,10 @@ class VideoPlayer(QMainWindow):
         menu_bar = self.menuBar()
         if menu_bar is None:
             return
-        file_menu = menu_bar.addMenu("&Files")
+        file_menu = menu_bar.addMenu("&File")
         if file_menu is None:
             return
+
         open_file = QAction("&Open", self)
         open_file.triggered.connect(self.open_file)
 
@@ -63,6 +64,10 @@ class VideoPlayer(QMainWindow):
             "Video Files (*.mp4);; Audio Files (*.mp3, *.flac, *.wav)",
         )
         self.media_player.setSource(QUrl.fromLocalFile(file_path[0]))
+
+        # Makes video player show first frame.
+        self.media_player.play()
+        self.media_player.pause()
 
     def close_file(self):
         self.media_player.setSource(QUrl())
