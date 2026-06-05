@@ -10,7 +10,6 @@ from PyQt6.QtWidgets import (
     QSlider,
     QFileDialog,
     QLabel,
-    QSizePolicy,
 )
 from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PyQt6.QtMultimediaWidgets import QVideoWidget
@@ -106,6 +105,9 @@ class VideoPlayer(QMainWindow):
         # Makes video player show first frame.
         self.media_player.play()
         self.media_player.pause()
+
+        self.playback_button.setText("Play")
+        self.playback_speed_slider.setValue(100)
 
     def close_file(self):
         self.media_player.setSource(QUrl())
@@ -217,7 +219,7 @@ class VideoPlayer(QMainWindow):
         self.playback_speed_widget = container
 
         speed_slider = QSlider(Qt.Orientation.Horizontal)
-        speed_slider.setRange(1, 200)
+        speed_slider.setRange(25, 200)
         speed_slider.setValue(100)
         speed_slider.setFixedWidth(75)
 
@@ -237,6 +239,8 @@ class VideoPlayer(QMainWindow):
         layout.addWidget(title, 0, 0)
         layout.addWidget(speed_display, 0, 1, Qt.AlignmentFlag.AlignRight)
         layout.addWidget(speed_slider, 0, 2, Qt.AlignmentFlag.AlignLeft)
+
+        self.playback_speed_slider = speed_slider
 
     def init_main_widget(self):
 
