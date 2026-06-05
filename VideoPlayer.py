@@ -100,7 +100,9 @@ class VideoPlayer(QMainWindow):
             "",
             "Video Files (*.mp4);; Audio Files (*.mp3, *.flac, *.wav)",
         )
-        self.media_player.setSource(QUrl.fromLocalFile(file_path[0]))
+
+        if file_path[0] != "" and file_path[1] != "":
+            self.media_player.setSource(QUrl.fromLocalFile(file_path[0]))
 
         # Makes video player show first frame.
         self.media_player.play()
