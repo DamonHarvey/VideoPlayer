@@ -9,10 +9,20 @@ from PyQt6.QtWidgets import (
     QGridLayout,
     QSlider,
     QFileDialog,
+    QLabel,
 )
 from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PyQt6.QtMultimediaWidgets import QVideoWidget
 from PyQt6.QtGui import QAction
+
+
+def convert_ms(milliseconds: int) -> str:
+
+    seconds, ms = divmod(milliseconds, 1000)
+    minutes, seconds = divmod(seconds, 60)
+    hours, minutes = divmod(minutes, 60)
+
+    return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
 
 class VideoPlayer(QMainWindow):
@@ -25,8 +35,7 @@ class VideoPlayer(QMainWindow):
         self.init_player()
         self.init_buttons()
         self.init_slider()
-
-        self.debug()
+        self.init_playback_progress_display()
 
         self.init_main_widget()
 
@@ -38,23 +47,48 @@ class VideoPlayer(QMainWindow):
         menu_bar = self.menuBar()
         if menu_bar is None:
             return
-        file_menu = menu_bar.addMenu("&File")
-        if file_menu is None:
-            return
 
-        open_file = QAction("&Open", self)
+        self.menu_bar = menu_bar
+
+        self.init_menu_bar_file()
+        self.init_menu_bar_debug()
+
+    def init_menu_bar_file(self):
+        file_menu = self.menu_bar.addMenu("File")
+        if file_menu is None:
+            raise TypeError("file_menu is none")
+
+        open_file = QAction("Open", self)
         open_file.triggered.connect(self.open_file)
 
-        close_file = QAction("&Close", self)
+        close_file = QAction("Close", self)
         close_file.triggered.connect(self.close_file)
 
-        exit_app = QAction("&Exit", self)
+        exit_app = QAction("Exit", self)
         exit_app.triggered.connect(lambda: self.close())
 
         file_menu.addAction(open_file)
         file_menu.addAction(close_file)
         file_menu.addSeparator()
         file_menu.addAction(exit_app)
+
+    def init_menu_bar_debug(self):
+        debug_menu = self.menu_bar.addMenu("Debug")
+        if debug_menu is None:
+            raise TypeError("debug_menu is none")
+
+        get_file_position = QAction("Get file position", self)
+        get_file_position.triggered.connect(
+            lambda: print(f"Position: {self.media_player.position()}")
+        )
+
+        get_file_duration = QAction("Get file duration", self)
+        get_file_duration.triggered.connect(
+            lambda: print(f"Duration: {self.media_player.duration()}")
+        )
+
+        debug_menu.addAction(get_file_position)
+        debug_menu.addAction(get_file_duration)
 
     def open_file(self):
         file_path = QFileDialog.getOpenFileName(
@@ -86,15 +120,15 @@ class VideoPlayer(QMainWindow):
         play_button.setText("Play")
         play_button.clicked.connect(self.set_playback)
         play_button.setFixedSize(QSize(100, 30))
-        self.play_button = play_button
+        self.playback_button = play_button
 
     def set_playback(self):
         if not self.media_player.isPlaying():
             self.media_player.play()
-            self.play_button.setText("Pause")
+            self.playback_button.setText("Pause")
         else:
             self.media_player.pause()
-            self.play_button.setText("Play")
+            self.playback_button.setText("Play")
 
     def init_slider(self):
         slider = QSlider(Qt.Orientation.Horizontal)
@@ -116,33 +150,39 @@ class VideoPlayer(QMainWindow):
         self.position_slider.setValue(self.media_player.position())
         self.position_slider.blockSignals(False)
 
+    def init_playback_progress_display(self):
+        playback_position = QLabel(text="00:00:00")
+        playback_duration = QLabel(text="00:00:00")
+
+        playback_position.setFixedWidth(42)
+        playback_duration.setFixedWidth(42)
+
+        self.media_player.positionChanged.connect(
+            lambda: playback_position.setText(convert_ms(self.media_player.position()))
+        )
+
+        self.media_player.durationChanged.connect(
+            lambda: playback_duration.setText(convert_ms(self.media_player.duration()))
+        )
+
+        self.playback_position = playback_position
+        self.playback_duration = playback_duration
+
     def init_main_widget(self):
 
         layout = QGridLayout()
-        layout.addWidget(self.video_widget, 0, 0, 1, 1)
-        layout.addWidget(self.play_button, 2, 0, Qt.AlignmentFlag.AlignHCenter)
-        layout.addWidget(self.position_slider, 1, 0, 1, 1)
+        layout.addWidget(self.video_widget, 0, 0, 1, 3)
 
-        #### debug
-        # layout.addWidget(self.debug_button, 3, 0)
-        ####
+        layout.addWidget(self.playback_position, 1, 0)
+        layout.addWidget(self.position_slider, 1, 1)
+        layout.addWidget(self.playback_duration, 1, 2)
+
+        layout.addWidget(self.playback_button, 2, 1, Qt.AlignmentFlag.AlignHCenter)
 
         container = QWidget()
         container.setLayout(layout)
 
         self.setCentralWidget(container)
-
-    def debug(self):
-        button = QPushButton()
-        button.setText("debug")
-
-        button.clicked.connect(
-            lambda: print(
-                f"{self.media_player.position()}/{self.media_player.duration()}"
-            )
-        )
-
-        self.debug_button = button
 
 
 def main():
