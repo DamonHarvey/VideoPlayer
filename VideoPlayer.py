@@ -33,10 +33,13 @@ class VideoPlayer(QMainWindow):
 
         self.init_window()
         self.init_player()
-        self.init_audio()
+
         self.init_menu_bar()
+
         self.init_playback_button()
         self.init_playback_widget()
+        self.init_audio_widget()
+        self.init_playback_speed_widget()
 
         self.init_main_widget()
 
@@ -110,6 +113,9 @@ class VideoPlayer(QMainWindow):
     def init_player(self):
         self.media_player = QMediaPlayer()
 
+        self.audio_output = QAudioOutput()
+        self.media_player.setAudioOutput(self.audio_output)
+
         self.video_widget = QVideoWidget()
         self.media_player.setVideoOutput(self.video_widget)
 
@@ -167,17 +173,14 @@ class VideoPlayer(QMainWindow):
         layout.addWidget(slider, 0, 1)
         layout.addWidget(playback_duration, 0, 2)
 
-        container.setMaximumHeight(40)
+        container.setMaximumHeight(35)
 
     def on_position_change(self):
         self.position_slider.blockSignals(True)
         self.position_slider.setValue(self.media_player.position())
         self.position_slider.blockSignals(False)
 
-    def init_audio(self):
-
-        self.audio_output = QAudioOutput()
-        self.media_player.setAudioOutput(self.audio_output)
+    def init_audio_widget(self):
 
         layout = QGridLayout()
         container = QWidget()
@@ -187,7 +190,7 @@ class VideoPlayer(QMainWindow):
         volume_slider = QSlider(Qt.Orientation.Horizontal)
         volume_slider.setRange(0, 100)
         volume_slider.setValue(100)
-        volume_slider.setFixedWidth(50)
+        volume_slider.setFixedWidth(75)
 
         volume_slider.valueChanged.connect(
             lambda: self.audio_output.setVolume(volume_slider.value() / 100)
@@ -195,12 +198,45 @@ class VideoPlayer(QMainWindow):
 
         volume_display = QLabel()
         volume_display.setText("100%")
+        volume_display.setFixedWidth(28)
         volume_slider.valueChanged.connect(
             lambda: volume_display.setText(f"{volume_slider.value()}%")
         )
 
-        layout.addWidget(volume_display, 0, 0, Qt.AlignmentFlag.AlignRight)
-        layout.addWidget(volume_slider, 0, 1, Qt.AlignmentFlag.AlignLeft)
+        title = QLabel(text="Volume:")
+
+        layout.addWidget(title, 0, 0)
+        layout.addWidget(volume_display, 0, 1, Qt.AlignmentFlag.AlignRight)
+        layout.addWidget(volume_slider, 0, 2, Qt.AlignmentFlag.AlignLeft)
+
+    def init_playback_speed_widget(self):
+
+        layout = QGridLayout()
+        container = QWidget()
+        container.setLayout(layout)
+        self.playback_speed_widget = container
+
+        speed_slider = QSlider(Qt.Orientation.Horizontal)
+        speed_slider.setRange(1, 200)
+        speed_slider.setValue(100)
+        speed_slider.setFixedWidth(75)
+
+        speed_slider.valueChanged.connect(
+            lambda: self.media_player.setPlaybackRate(speed_slider.value() / 100)
+        )
+
+        speed_display = QLabel()
+        speed_display.setText(f"{1:.2f}")
+        speed_display.setFixedWidth(28)
+        speed_slider.valueChanged.connect(
+            lambda: speed_display.setText(f"{speed_slider.value()/100:.2f}")
+        )
+
+        title = QLabel(text="Speed:")
+
+        layout.addWidget(title, 0, 0)
+        layout.addWidget(speed_display, 0, 1, Qt.AlignmentFlag.AlignRight)
+        layout.addWidget(speed_slider, 0, 2, Qt.AlignmentFlag.AlignLeft)
 
     def init_main_widget(self):
 
@@ -210,8 +246,7 @@ class VideoPlayer(QMainWindow):
 
         layout.addWidget(self.playback_button, 2, 1)
         layout.addWidget(self.volume_widget, 2, 2, Qt.AlignmentFlag.AlignRight)
-
-        layout.setSpacing(0)
+        layout.addWidget(self.playback_speed_widget, 2, 0, Qt.AlignmentFlag.AlignLeft)
 
         container = QWidget()
         container.setLayout(layout)
