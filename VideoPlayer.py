@@ -65,7 +65,14 @@ class VideoPlayer(QMainWindow):
             lambda: self.media_player.setPosition(slider.value())
         )
 
+        self.media_player.positionChanged.connect(self.on_position_change)
+
         self.position_slider = slider
+
+    def on_position_change(self):
+        self.position_slider.blockSignals(True)
+        self.position_slider.setValue(self.media_player.position())
+        self.position_slider.blockSignals(False)
 
     def init_main_widget(self):
 
