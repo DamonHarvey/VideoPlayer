@@ -8,9 +8,11 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QGridLayout,
     QSlider,
+    QFileDialog,
 )
 from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PyQt6.QtMultimediaWidgets import QVideoWidget
+from PyQt6.QtGui import QAction
 
 
 class VideoPlayer(QMainWindow):
@@ -19,6 +21,7 @@ class VideoPlayer(QMainWindow):
         super().__init__()
 
         self.init_window()
+        self.init_menu_bar()
         self.init_player()
         self.init_buttons()
         self.init_slider()
@@ -31,9 +34,41 @@ class VideoPlayer(QMainWindow):
         self.setWindowTitle("Video Player")
         self.resize(QSize(1280, 720))
 
+    def init_menu_bar(self):
+        menu_bar = self.menuBar()
+        if menu_bar is None:
+            return
+        file_menu = menu_bar.addMenu("&Files")
+        if file_menu is None:
+            return
+        open_file = QAction("&Open", self)
+        open_file.triggered.connect(self.open_file)
+
+        close_file = QAction("&Close", self)
+        close_file.triggered.connect(self.close_file)
+
+        exit_app = QAction("&Exit", self)
+        exit_app.triggered.connect(lambda: self.close())
+
+        file_menu.addAction(open_file)
+        file_menu.addAction(close_file)
+        file_menu.addSeparator()
+        file_menu.addAction(exit_app)
+
+    def open_file(self):
+        file_path = QFileDialog.getOpenFileName(
+            self,
+            "Select a File",
+            "",
+            "Video Files (*.mp4);; Audio Files (*.mp3, *.flac, *.wav)",
+        )
+        self.media_player.setSource(QUrl.fromLocalFile(file_path[0]))
+
+    def close_file(self):
+        self.media_player.setSource(QUrl())
+
     def init_player(self):
         self.media_player = QMediaPlayer()
-        self.media_player.setSource(QUrl.fromLocalFile(r"VideoPlayer\video.mp4"))
 
         self.video_widget = QVideoWidget()
         self.media_player.setVideoOutput(self.video_widget)
@@ -44,15 +79,17 @@ class VideoPlayer(QMainWindow):
     def init_buttons(self):
         play_button = QPushButton()
         play_button.setText("Play")
-        play_button.clicked.connect(lambda: self.media_player.play())
+        play_button.clicked.connect(self.set_playback)
         play_button.setFixedSize(QSize(100, 30))
         self.play_button = play_button
 
-        pause_button = QPushButton()
-        pause_button.setText("Pause")
-        pause_button.clicked.connect(lambda: self.media_player.pause())
-        pause_button.setFixedSize(QSize(100, 30))
-        self.pause_button = pause_button
+    def set_playback(self):
+        if not self.media_player.isPlaying():
+            self.media_player.play()
+            self.play_button.setText("Pause")
+        else:
+            self.media_player.pause()
+            self.play_button.setText("Play")
 
     def init_slider(self):
         slider = QSlider(Qt.Orientation.Horizontal)
@@ -77,10 +114,9 @@ class VideoPlayer(QMainWindow):
     def init_main_widget(self):
 
         layout = QGridLayout()
-        layout.addWidget(self.video_widget, 0, 0, 1, 2)
-        layout.addWidget(self.play_button, 2, 0, Qt.AlignmentFlag.AlignRight)
-        layout.addWidget(self.pause_button, 2, 1, Qt.AlignmentFlag.AlignLeft)
-        layout.addWidget(self.position_slider, 1, 0, 1, 2)
+        layout.addWidget(self.video_widget, 0, 0, 1, 1)
+        layout.addWidget(self.play_button, 2, 0, Qt.AlignmentFlag.AlignHCenter)
+        layout.addWidget(self.position_slider, 1, 0, 1, 1)
 
         #### debug
         # layout.addWidget(self.debug_button, 3, 0)
