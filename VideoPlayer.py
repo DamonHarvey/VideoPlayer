@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import (
     QSlider,
     QFileDialog,
     QLabel,
+    QSizePolicy,
 )
 from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PyQt6.QtMultimediaWidgets import QVideoWidget
@@ -35,8 +36,7 @@ class VideoPlayer(QMainWindow):
         self.init_audio()
         self.init_menu_bar()
         self.init_playback_button()
-        self.init_playback_slider()
-        self.init_playback_progress_display()
+        self.init_playback_widget()
 
         self.init_main_widget()
 
@@ -128,7 +128,13 @@ class VideoPlayer(QMainWindow):
             self.media_player.pause()
             self.playback_button.setText("Play")
 
-    def init_playback_slider(self):
+    def init_playback_widget(self):
+
+        layout = QGridLayout()
+        container = QWidget()
+        container.setLayout(layout)
+        self.play_back_widget = container
+
         slider = QSlider(Qt.Orientation.Horizontal)
 
         self.media_player.durationChanged.connect(
@@ -143,12 +149,6 @@ class VideoPlayer(QMainWindow):
 
         self.position_slider = slider
 
-    def on_position_change(self):
-        self.position_slider.blockSignals(True)
-        self.position_slider.setValue(self.media_player.position())
-        self.position_slider.blockSignals(False)
-
-    def init_playback_progress_display(self):
         playback_position = QLabel(text="00:00:00")
         playback_duration = QLabel(text="00:00:00")
 
@@ -163,8 +163,16 @@ class VideoPlayer(QMainWindow):
             lambda: playback_duration.setText(convert_ms(self.media_player.duration()))
         )
 
-        self.playback_position = playback_position
-        self.playback_duration = playback_duration
+        layout.addWidget(playback_position, 0, 0)
+        layout.addWidget(slider, 0, 1)
+        layout.addWidget(playback_duration, 0, 2)
+
+        container.setMaximumHeight(40)
+
+    def on_position_change(self):
+        self.position_slider.blockSignals(True)
+        self.position_slider.setValue(self.media_player.position())
+        self.position_slider.blockSignals(False)
 
     def init_audio(self):
 
@@ -198,14 +206,12 @@ class VideoPlayer(QMainWindow):
 
         layout = QGridLayout()
         layout.addWidget(self.video_widget, 0, 0, 1, 3)
+        layout.addWidget(self.play_back_widget, 1, 0, 1, 3)
 
-        layout.addWidget(self.playback_position, 1, 0)
-        layout.addWidget(self.position_slider, 1, 1)
-        layout.addWidget(self.playback_duration, 1, 2)
+        layout.addWidget(self.playback_button, 2, 1)
+        layout.addWidget(self.volume_widget, 2, 2, Qt.AlignmentFlag.AlignRight)
 
-        layout.addWidget(self.playback_button, 2, 1, Qt.AlignmentFlag.AlignHCenter)
-
-        layout.addWidget(self.volume_widget, 2, 2)
+        layout.setSpacing(0)
 
         container = QWidget()
         container.setLayout(layout)
