@@ -119,6 +119,8 @@ class VideoPlayer(QMainWindow):
         self.media_player.setAudioOutput(self.audio_output)
 
         self.video_widget = QVideoWidget()
+        self.video_widget.setMinimumSize(1280, 720)
+
         self.media_player.setVideoOutput(self.video_widget)
 
     def init_playback_button(self):
@@ -159,7 +161,6 @@ class VideoPlayer(QMainWindow):
 
         playback_position = QLabel(text="00:00:00")
         playback_duration = QLabel(text="00:00:00")
-
         playback_position.setFixedWidth(42)
         playback_duration.setFixedWidth(42)
 
@@ -171,11 +172,17 @@ class VideoPlayer(QMainWindow):
             lambda: playback_duration.setText(convert_ms(self.media_player.duration()))
         )
 
+        self.media_player.positionChanged.connect(self.check_end_of_video)
+
         layout.addWidget(playback_position, 0, 0)
         layout.addWidget(slider, 0, 1)
         layout.addWidget(playback_duration, 0, 2)
 
         container.setMaximumHeight(35)
+
+    def check_end_of_video(self):
+        if self.media_player.position() == self.media_player.duration():
+            self.playback_button.setText("Play")
 
     def on_position_change(self):
         self.position_slider.blockSignals(True)
