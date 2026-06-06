@@ -13,7 +13,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PyQt6.QtMultimediaWidgets import QVideoWidget
-from PyQt6.QtGui import QAction
+from PyQt6.QtGui import QAction, QIcon
 
 
 def convert_ms(milliseconds: int) -> str:
@@ -49,6 +49,7 @@ class VideoPlayer(QMainWindow):
     def init_window(self):
         self.setWindowTitle("Video Player")
         self.resize(QSize(1280, 720))
+        self.setWindowIcon(QIcon(r"VideoPlayer\icon.ico"))
 
     def init_menu_bar(self):
         menu_bar = self.menuBar()
