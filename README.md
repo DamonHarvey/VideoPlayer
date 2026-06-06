@@ -1,2 +1,2 @@
 # VideoPlayer
-Simple video player using pyqt6 library.
+Simple video player using PySide6 library.
