@@ -1,4 +1,4 @@
-import sys
+import sys, os
 
 from PySide6.QtCore import QSize, QUrl, Qt
 from PySide6.QtWidgets import (
@@ -14,6 +14,15 @@ from PySide6.QtWidgets import (
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PySide6.QtMultimediaWidgets import QVideoWidget
 from PySide6.QtGui import QAction, QIcon
+
+
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS  # type: ignore
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
 
 
 def convert_ms(milliseconds: int) -> str:
@@ -49,7 +58,10 @@ class VideoPlayer(QMainWindow):
     def init_window(self):
         self.setWindowTitle("Video Player")
         self.resize(QSize(1280, 720))
-        self.setWindowIcon(QIcon(r"VideoPlayer\icon.ico"))
+
+        icon_path = resource_path("icon.ico")
+
+        self.setWindowIcon(QIcon(icon_path))
 
     def init_menu_bar(self):
         menu_bar = self.menuBar()
