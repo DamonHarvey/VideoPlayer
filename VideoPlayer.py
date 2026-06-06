@@ -1,7 +1,7 @@
 import sys
 
-from PyQt6.QtCore import QSize, QUrl, Qt
-from PyQt6.QtWidgets import (
+from PySide6.QtCore import QSize, QUrl, Qt
+from PySide6.QtWidgets import (
     QApplication,
     QMainWindow,
     QWidget,
@@ -11,9 +11,9 @@ from PyQt6.QtWidgets import (
     QFileDialog,
     QLabel,
 )
-from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
-from PyQt6.QtMultimediaWidgets import QVideoWidget
-from PyQt6.QtGui import QAction, QIcon
+from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
+from PySide6.QtMultimediaWidgets import QVideoWidget
+from PySide6.QtGui import QAction, QIcon
 
 
 def convert_ms(milliseconds: int) -> str:
