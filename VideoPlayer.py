@@ -27,7 +27,7 @@ def convert_ms(milliseconds: int) -> str:
 
 class VideoPlayer(QMainWindow):
 
-    def __init__(self) -> None:
+    def __init__(self, initial_file=None) -> None:
         super().__init__()
 
         self.init_window()
@@ -41,6 +41,10 @@ class VideoPlayer(QMainWindow):
         self.init_playback_speed_widget()
 
         self.init_main_widget()
+
+        if initial_file:
+            self.media_player.setSource(QUrl.fromLocalFile(initial_file))
+            self.playback_button.click()
 
     def init_window(self):
         self.setWindowTitle("Video Player")
@@ -272,7 +276,10 @@ class VideoPlayer(QMainWindow):
 def main():
 
     app = QApplication(sys.argv)
-    window = VideoPlayer()
+
+    file_path = sys.argv[1] if len(sys.argv) > 1 else None
+
+    window = VideoPlayer(file_path)
     window.show()
 
     sys.exit(app.exec())
