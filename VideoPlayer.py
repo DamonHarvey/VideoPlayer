@@ -49,7 +49,7 @@ class VideoPlayer(QMainWindow):
         self.init_audio_widget()
         self.init_playback_speed_widget()
 
-        self.init_main_widget()
+        self.place_widgets()
 
         if initial_file:
             self.media_player.setSource(QUrl.fromLocalFile(initial_file))
@@ -145,11 +145,43 @@ class VideoPlayer(QMainWindow):
         self.media_player.setVideoOutput(self.video_widget)
 
     def init_playback_button(self):
+
+        layout = QGridLayout()
+        container = QWidget()
+        container.setLayout(layout)
+        self.play_button_widget = container
+
         playback_button = QPushButton()
         playback_button.setText("Play")
         playback_button.clicked.connect(self.set_playback)
         playback_button.setFixedSize(QSize(100, 30))
         self.playback_button = playback_button
+
+        SECOND = 1000
+
+        advance_button = QPushButton()
+        advance_button.setText("+15")
+        advance_button.setFixedSize(QSize(40, 30))
+        advance_button.clicked.connect(
+            lambda: self.media_player.setPosition(
+                self.media_player.position() + SECOND * 15
+            )
+        )
+        self.advance_button = advance_button
+
+        regress_button = QPushButton()
+        regress_button.setText("-15")
+        regress_button.setFixedSize(QSize(40, 30))
+        regress_button.clicked.connect(
+            lambda: self.media_player.setPosition(
+                self.media_player.position() - SECOND * 15
+            )
+        )
+        self.regress_button = regress_button
+
+        layout.addWidget(advance_button, 0, 2, Qt.AlignmentFlag.AlignLeft)
+        layout.addWidget(playback_button, 0, 1)
+        layout.addWidget(regress_button, 0, 0, Qt.AlignmentFlag.AlignRight)
 
     def set_playback(self):
         if not self.media_player.isPlaying():
@@ -270,13 +302,13 @@ class VideoPlayer(QMainWindow):
 
         self.playback_speed_slider = speed_slider
 
-    def init_main_widget(self):
+    def place_widgets(self):
 
         layout = QGridLayout()
         layout.addWidget(self.video_widget, 0, 0, 1, 3)
         layout.addWidget(self.play_back_widget, 1, 0, 1, 3)
 
-        layout.addWidget(self.playback_button, 2, 1)
+        layout.addWidget(self.play_button_widget, 2, 1)
         layout.addWidget(self.volume_widget, 2, 2, Qt.AlignmentFlag.AlignRight)
         layout.addWidget(self.playback_speed_widget, 2, 0, Qt.AlignmentFlag.AlignLeft)
 
