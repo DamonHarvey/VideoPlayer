@@ -176,11 +176,6 @@ class VideoPlayer(QMainWindow):
             SECOND = 1000
             self.media_player.setPosition(self.media_player.position() - SECOND * 15)
 
-        layout = QGridLayout()
-        container = QWidget()
-        container.setLayout(layout)
-        self.play_button_widget = container
-
         playback_button = QPushButton()
         playback_button.setText("Play")
         playback_button.clicked.connect(set_playback)
@@ -199,9 +194,15 @@ class VideoPlayer(QMainWindow):
         regress_button.clicked.connect(skip_backward)
         self.regress_button = regress_button
 
-        layout.addWidget(advance_button, 0, 2, Qt.AlignmentFlag.AlignLeft)
-        layout.addWidget(playback_button, 0, 1)
+        layout = QGridLayout()
+        container = QWidget()
+        container.setLayout(layout)
+        container.setMaximumHeight(40)
+        self.play_button_widget = container
+
         layout.addWidget(regress_button, 0, 0, Qt.AlignmentFlag.AlignRight)
+        layout.addWidget(playback_button, 0, 1)
+        layout.addWidget(advance_button, 0, 2, Qt.AlignmentFlag.AlignLeft)
 
     def init_playback_bar_widget(self):
         def on_position_change():
@@ -209,15 +210,10 @@ class VideoPlayer(QMainWindow):
             self.position_slider.setValue(self.media_player.position())
             self.position_slider.blockSignals(False)
 
-        def check_end_of_video(status):
+        def end_of_media(status):
             if status == self.media_player.MediaStatus.EndOfMedia:
                 self.media_player.pause()
                 self.playback_button.setText("Play")
-
-        layout = QGridLayout()
-        container = QWidget()
-        container.setLayout(layout)
-        self.play_back_bar_widget = container
 
         slider = QSlider(Qt.Orientation.Horizontal)
         slider.setRange(0, 0)
@@ -247,20 +243,19 @@ class VideoPlayer(QMainWindow):
             lambda: playback_duration.setText(convert_ms(self.media_player.duration()))
         )
 
-        self.media_player.mediaStatusChanged.connect(check_end_of_video)
+        self.media_player.mediaStatusChanged.connect(end_of_media)
+
+        layout = QGridLayout()
+        container = QWidget()
+        container.setLayout(layout)
+        container.setMaximumHeight(35)
+        self.play_back_bar_widget = container
 
         layout.addWidget(playback_position, 0, 0)
         layout.addWidget(slider, 0, 1)
         layout.addWidget(playback_duration, 0, 2)
 
-        container.setMaximumHeight(35)
-
     def init_audio_widget(self):
-
-        layout = QGridLayout()
-        container = QWidget()
-        container.setLayout(layout)
-        self.volume_widget = container
 
         volume_slider = QSlider(Qt.Orientation.Horizontal)
         volume_slider.setRange(0, 100)
@@ -281,16 +276,17 @@ class VideoPlayer(QMainWindow):
 
         title = QLabel(text="Volume:")
 
+        layout = QGridLayout()
+        container = QWidget()
+        container.setLayout(layout)
+        container.setMaximumHeight(35)
+        self.volume_widget = container
+
         layout.addWidget(title, 0, 0)
         layout.addWidget(volume_display, 0, 1, Qt.AlignmentFlag.AlignRight)
         layout.addWidget(volume_slider, 0, 2, Qt.AlignmentFlag.AlignLeft)
 
     def init_playback_speed_widget(self):
-
-        layout = QGridLayout()
-        container = QWidget()
-        container.setLayout(layout)
-        self.playback_speed_widget = container
 
         speed_slider = QSlider(Qt.Orientation.Horizontal)
         speed_slider.setRange(25, 200)
@@ -310,6 +306,12 @@ class VideoPlayer(QMainWindow):
 
         title = QLabel(text="Speed:")
 
+        layout = QGridLayout()
+        container = QWidget()
+        container.setLayout(layout)
+        container.setMaximumHeight(35)
+        self.playback_speed_widget = container
+
         layout.addWidget(title, 0, 0)
         layout.addWidget(speed_display, 0, 1, Qt.AlignmentFlag.AlignRight)
         layout.addWidget(speed_slider, 0, 2, Qt.AlignmentFlag.AlignLeft)
@@ -326,13 +328,13 @@ class VideoPlayer(QMainWindow):
                 self.volume_slider.setValue(self._last_volume)
 
         pause = QShortcut(QKeySequence("Space"), self)
-        pause.activated.connect(self.playback_button.click)
+        pause.activated.connect(self.playback_button.animateClick)
 
         pause = QShortcut(QKeySequence("right"), self)
-        pause.activated.connect(self.advance_button.click)
+        pause.activated.connect(self.advance_button.animateClick)
 
         pause = QShortcut(QKeySequence("left"), self)
-        pause.activated.connect(self.regress_button.click)
+        pause.activated.connect(self.regress_button.animateClick)
 
         pause = QShortcut(QKeySequence("M"), self)
         self._last_volume = 100
