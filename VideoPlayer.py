@@ -75,6 +75,7 @@ class VideoPlayer(QMainWindow):
         self.menu_bar = menu_bar
 
         self.init_menu_bar_file()
+        self.init_menu_bar_settings()
         self.init_menu_bar_debug()
 
     def init_menu_bar_file(self):
@@ -136,6 +137,22 @@ class VideoPlayer(QMainWindow):
 
         debug_menu.addAction(get_file_position)
         debug_menu.addAction(get_file_duration)
+
+    def init_menu_bar_settings(self):
+        def toggle_free_resize():
+            if free_resize.isChecked():
+                self.video_widget.setMinimumSize(0, 0)
+            else:
+                self.video_widget.setMinimumSize(1280, 720)
+
+        settings_menu = self.menu_bar.addMenu("Settings")
+        if settings_menu is None:
+            raise TypeError("settings_menu is none")
+
+        free_resize = QAction("Free resize", self, checkable=True, checked=False)
+        free_resize.triggered.connect(toggle_free_resize)
+
+        settings_menu.addAction(free_resize)
 
     def init_player(self):
         self.media_player = QMediaPlayer()
