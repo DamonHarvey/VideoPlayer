@@ -39,13 +39,15 @@ class VideoPlayer(QMainWindow):
     def __init__(self, initial_file=None) -> None:
         super().__init__()
 
+        self.widgets: dict[str, QWidget] = {}
+
         self.init_window()
         self.init_player()
 
         self.init_menu_bar()
 
         self.init_playback_button()
-        self.init_playback_widget()
+        self.init_playback_bar_widget()
         self.init_audio_widget()
         self.init_playback_speed_widget()
 
@@ -184,21 +186,24 @@ class VideoPlayer(QMainWindow):
         layout.addWidget(regress_button, 0, 0, Qt.AlignmentFlag.AlignRight)
 
     def set_playback(self):
-        if not self.media_player.isPlaying():
+        if self.media_player.duration() == 0:
+            self.playback_button.setText("Play")
+        elif not self.media_player.isPlaying():
             self.media_player.play()
             self.playback_button.setText("Pause")
         else:
             self.media_player.pause()
             self.playback_button.setText("Play")
 
-    def init_playback_widget(self):
+    def init_playback_bar_widget(self):
 
         layout = QGridLayout()
         container = QWidget()
         container.setLayout(layout)
-        self.play_back_widget = container
+        self.play_back_bar_widget = container
 
         slider = QSlider(Qt.Orientation.Horizontal)
+        slider.setRange(0, 0)
 
         self.media_player.durationChanged.connect(
             lambda: slider.setRange(0, self.media_player.duration())
@@ -305,17 +310,16 @@ class VideoPlayer(QMainWindow):
     def place_widgets(self):
 
         layout = QGridLayout()
+        container = QWidget()
+        container.setLayout(layout)
+        self.setCentralWidget(container)
+
         layout.addWidget(self.video_widget, 0, 0, 1, 3)
-        layout.addWidget(self.play_back_widget, 1, 0, 1, 3)
+        layout.addWidget(self.play_back_bar_widget, 1, 0, 1, 3)
 
         layout.addWidget(self.play_button_widget, 2, 1)
         layout.addWidget(self.volume_widget, 2, 2, Qt.AlignmentFlag.AlignRight)
         layout.addWidget(self.playback_speed_widget, 2, 0, Qt.AlignmentFlag.AlignLeft)
-
-        container = QWidget()
-        container.setLayout(layout)
-
-        self.setCentralWidget(container)
 
 
 def main():
