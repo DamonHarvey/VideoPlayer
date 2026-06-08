@@ -13,7 +13,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PySide6.QtMultimediaWidgets import QVideoWidget
-from PySide6.QtGui import QAction, QIcon
+from PySide6.QtGui import QAction, QIcon, QKeySequence, QShortcut
 
 
 def resource_path(relative_path):
@@ -50,6 +50,8 @@ class VideoPlayer(QMainWindow):
         self.init_playback_bar_widget()
         self.init_audio_widget()
         self.init_playback_speed_widget()
+
+        self.init_shortcuts()
 
         self.place_widgets()
 
@@ -258,6 +260,7 @@ class VideoPlayer(QMainWindow):
         volume_slider.setRange(0, 100)
         volume_slider.setValue(100)
         volume_slider.setFixedWidth(75)
+        self.volume_slider = volume_slider
 
         volume_slider.valueChanged.connect(
             lambda: self.audio_output.setVolume(volume_slider.value() / 100)
@@ -306,6 +309,28 @@ class VideoPlayer(QMainWindow):
         layout.addWidget(speed_slider, 0, 2, Qt.AlignmentFlag.AlignLeft)
 
         self.playback_speed_slider = speed_slider
+
+    def init_shortcuts(self):
+        def mute_shortcut():
+
+            if self.volume_slider.value() > 0:
+                self.last_volume = self.volume_slider.value()
+                self.volume_slider.setValue(0)
+            else:
+                self.volume_slider.setValue(self.last_volume)
+
+        pause = QShortcut(QKeySequence("Space"), self)
+        pause.activated.connect(self.playback_button.click)
+
+        pause = QShortcut(QKeySequence("right"), self)
+        pause.activated.connect(self.advance_button.click)
+
+        pause = QShortcut(QKeySequence("left"), self)
+        pause.activated.connect(self.regress_button.click)
+
+        pause = QShortcut(QKeySequence("M"), self)
+        self.last_volume = 100
+        pause.activated.connect(mute_shortcut)
 
     def place_widgets(self):
 
