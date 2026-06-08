@@ -78,21 +78,44 @@ class VideoPlayer(QMainWindow):
         self.init_menu_bar_debug()
 
     def init_menu_bar_file(self):
+        def open_file():
+            file_path = QFileDialog.getOpenFileName(
+                self,
+                "Select a File",
+                "",
+                "Video Files (*.mp4);; Audio Files (*.mp3, *.flac, *.wav)",
+            )
+
+            if file_path[0] == "" and file_path[1] == "":
+                return
+
+            self.media_player.setSource(QUrl.fromLocalFile(file_path[0]))
+
+            # Makes video player show first frame.
+            self.media_player.play()
+            self.media_player.pause()
+
+            self.playback_button.setText("Play")
+            self.playback_speed_slider.setValue(100)
+
+        def close_file():
+            self.media_player.setSource(QUrl())
+
         file_menu = self.menu_bar.addMenu("File")
         if file_menu is None:
             raise TypeError("file_menu is none")
 
-        open_file = QAction("Open", self)
-        open_file.triggered.connect(self.open_file)
+        open_new_file = QAction("Open", self)
+        open_new_file.triggered.connect(open_file)
 
-        close_file = QAction("Close", self)
-        close_file.triggered.connect(self.close_file)
+        close_current_file = QAction("Close", self)
+        close_current_file.triggered.connect(close_file)
 
         exit_app = QAction("Exit", self)
         exit_app.triggered.connect(lambda: self.close())
 
-        file_menu.addAction(open_file)
-        file_menu.addAction(close_file)
+        file_menu.addAction(open_new_file)
+        file_menu.addAction(close_current_file)
         file_menu.addSeparator()
         file_menu.addAction(exit_app)
 
@@ -114,29 +137,6 @@ class VideoPlayer(QMainWindow):
         debug_menu.addAction(get_file_position)
         debug_menu.addAction(get_file_duration)
 
-    def open_file(self):
-        file_path = QFileDialog.getOpenFileName(
-            self,
-            "Select a File",
-            "",
-            "Video Files (*.mp4);; Audio Files (*.mp3, *.flac, *.wav)",
-        )
-
-        if file_path[0] == "" and file_path[1] == "":
-            return
-
-        self.media_player.setSource(QUrl.fromLocalFile(file_path[0]))
-
-        # Makes video player show first frame.
-        self.media_player.play()
-        self.media_player.pause()
-
-        self.playback_button.setText("Play")
-        self.playback_speed_slider.setValue(100)
-
-    def close_file(self):
-        self.media_player.setSource(QUrl())
-
     def init_player(self):
         self.media_player = QMediaPlayer()
 
@@ -149,6 +149,32 @@ class VideoPlayer(QMainWindow):
         self.media_player.setVideoOutput(self.video_widget)
 
     def init_playback_button(self):
+        def set_playback():
+            if self.media_player.duration() == 0:
+                self.playback_button.setText("Play")
+            elif not self.media_player.isPlaying():
+                self.media_player.play()
+                self.playback_button.setText("Pause")
+            else:
+                self.media_player.pause()
+                self.playback_button.setText("Play")
+
+        def skip_forward():
+            SECOND = 1000
+
+            if (
+                self.media_player.position() + SECOND * 15
+                > self.media_player.duration()
+            ):
+                self.media_player.setPosition(self.media_player.duration())
+            else:
+                self.media_player.setPosition(
+                    self.media_player.position() + SECOND * 15
+                )
+
+        def skip_backward():
+            SECOND = 1000
+            self.media_player.setPosition(self.media_player.position() - SECOND * 15)
 
         layout = QGridLayout()
         container = QWidget()
@@ -157,47 +183,36 @@ class VideoPlayer(QMainWindow):
 
         playback_button = QPushButton()
         playback_button.setText("Play")
-        playback_button.clicked.connect(self.set_playback)
+        playback_button.clicked.connect(set_playback)
         playback_button.setFixedSize(QSize(100, 30))
         self.playback_button = playback_button
-
-        SECOND = 1000
 
         advance_button = QPushButton()
         advance_button.setText("+15")
         advance_button.setFixedSize(QSize(40, 30))
-        advance_button.clicked.connect(
-            lambda: self.media_player.setPosition(
-                self.media_player.position() + SECOND * 15
-            )
-        )
+        advance_button.clicked.connect(skip_forward)
         self.advance_button = advance_button
 
         regress_button = QPushButton()
         regress_button.setText("-15")
         regress_button.setFixedSize(QSize(40, 30))
-        regress_button.clicked.connect(
-            lambda: self.media_player.setPosition(
-                self.media_player.position() - SECOND * 15
-            )
-        )
+        regress_button.clicked.connect(skip_backward)
         self.regress_button = regress_button
 
         layout.addWidget(advance_button, 0, 2, Qt.AlignmentFlag.AlignLeft)
         layout.addWidget(playback_button, 0, 1)
         layout.addWidget(regress_button, 0, 0, Qt.AlignmentFlag.AlignRight)
 
-    def set_playback(self):
-        if self.media_player.duration() == 0:
-            self.playback_button.setText("Play")
-        elif not self.media_player.isPlaying():
-            self.media_player.play()
-            self.playback_button.setText("Pause")
-        else:
-            self.media_player.pause()
-            self.playback_button.setText("Play")
-
     def init_playback_bar_widget(self):
+        def on_position_change():
+            self.position_slider.blockSignals(True)
+            self.position_slider.setValue(self.media_player.position())
+            self.position_slider.blockSignals(False)
+
+        def check_end_of_video(status):
+            if status == self.media_player.MediaStatus.EndOfMedia:
+                self.media_player.pause()
+                self.playback_button.setText("Play")
 
         layout = QGridLayout()
         container = QWidget()
@@ -215,7 +230,7 @@ class VideoPlayer(QMainWindow):
             lambda: self.media_player.setPosition(slider.value())
         )
 
-        self.media_player.positionChanged.connect(self.on_position_change)
+        self.media_player.positionChanged.connect(on_position_change)
 
         self.position_slider = slider
 
@@ -232,22 +247,13 @@ class VideoPlayer(QMainWindow):
             lambda: playback_duration.setText(convert_ms(self.media_player.duration()))
         )
 
-        self.media_player.positionChanged.connect(self.check_end_of_video)
+        self.media_player.mediaStatusChanged.connect(check_end_of_video)
 
         layout.addWidget(playback_position, 0, 0)
         layout.addWidget(slider, 0, 1)
         layout.addWidget(playback_duration, 0, 2)
 
         container.setMaximumHeight(35)
-
-    def check_end_of_video(self):
-        if self.media_player.position() == self.media_player.duration():
-            self.playback_button.setText("Play")
-
-    def on_position_change(self):
-        self.position_slider.blockSignals(True)
-        self.position_slider.setValue(self.media_player.position())
-        self.position_slider.blockSignals(False)
 
     def init_audio_widget(self):
 
@@ -314,10 +320,10 @@ class VideoPlayer(QMainWindow):
         def mute_shortcut():
 
             if self.volume_slider.value() > 0:
-                self.last_volume = self.volume_slider.value()
+                self._last_volume = self.volume_slider.value()
                 self.volume_slider.setValue(0)
             else:
-                self.volume_slider.setValue(self.last_volume)
+                self.volume_slider.setValue(self._last_volume)
 
         pause = QShortcut(QKeySequence("Space"), self)
         pause.activated.connect(self.playback_button.click)
@@ -329,7 +335,7 @@ class VideoPlayer(QMainWindow):
         pause.activated.connect(self.regress_button.click)
 
         pause = QShortcut(QKeySequence("M"), self)
-        self.last_volume = 100
+        self._last_volume = 100
         pause.activated.connect(mute_shortcut)
 
     def place_widgets(self):
