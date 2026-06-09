@@ -51,9 +51,9 @@ class VideoPlayer(QMainWindow):
         self.init_audio_widget()
         self.init_playback_speed_widget()
 
-        self.init_shortcuts()
-
         self.place_widgets()
+
+        self.init_shortcuts()
 
         if initial_file:
             self.media_player.setSource(QUrl.fromLocalFile(initial_file))
@@ -135,8 +135,15 @@ class VideoPlayer(QMainWindow):
             lambda: print(f"Duration: {self.media_player.duration()}")
         )
 
+        get_applications_screen = QAction("Get screen", self)
+        get_applications_screen.triggered.connect(
+            lambda: print(self.windowHandle().screen())
+        )
+
         debug_menu.addAction(get_file_position)
         debug_menu.addAction(get_file_duration)
+        debug_menu.addSeparator()
+        debug_menu.addAction(get_applications_screen)
 
     def init_menu_bar_settings(self):
         def toggle_free_resize():
@@ -347,28 +354,50 @@ class VideoPlayer(QMainWindow):
         def toggle_fullscreen():
             if self.video_widget.isFullScreen():
                 self.video_widget.setFullScreen(False)
-            else:
-                self.video_widget.setFullScreen(True)
 
-        pause = QShortcut(QKeySequence(Qt.Key.Key_Space), self)
-        pause.setContext(Qt.ShortcutContext.ApplicationShortcut)
+                self.show()
+
+                centeral_widget = self.centralWidget()
+                if centeral_widget is None:
+                    raise TypeError
+                layout = centeral_widget.layout()
+                if layout is None:
+                    raise TypeError
+
+                self.video_widget.setParent(centeral_widget)
+                layout.addWidget(self.video_widget, 0, 0, 1, 3)  # type: ignore
+
+            else:
+                self.video_widget.setParent(None)
+
+                self.hide()
+
+                screen = self.windowHandle().screen()
+
+                self.video_widget.show()
+
+                self.video_widget.windowHandle().setScreen(screen)
+                self.video_widget.showFullScreen()
+
+        pause = QShortcut(QKeySequence(Qt.Key.Key_Space), self.video_widget)
+        # pause.setContext(Qt.ShortcutContext.ApplicationShortcut)
         pause.activated.connect(self.playback_button.animateClick)
 
-        forward = QShortcut(QKeySequence(Qt.Key.Key_Right), self)
-        forward.setContext(Qt.ShortcutContext.ApplicationShortcut)
+        forward = QShortcut(QKeySequence(Qt.Key.Key_Right), self.video_widget)
+        # forward.setContext(Qt.ShortcutContext.ApplicationShortcut)
         forward.activated.connect(self.advance_button.animateClick)
 
-        back = QShortcut(QKeySequence(Qt.Key.Key_Left), self)
-        back.setContext(Qt.ShortcutContext.ApplicationShortcut)
+        back = QShortcut(QKeySequence(Qt.Key.Key_Left), self.video_widget)
+        # back.setContext(Qt.ShortcutContext.ApplicationShortcut)
         back.activated.connect(self.regress_button.animateClick)
 
-        mute = QShortcut(QKeySequence(Qt.Key.Key_M), self)
-        mute.setContext(Qt.ShortcutContext.ApplicationShortcut)
+        mute = QShortcut(QKeySequence(Qt.Key.Key_M), self.video_widget)
+        # mute.setContext(Qt.ShortcutContext.ApplicationShortcut)
         self._last_volume = 100
         mute.activated.connect(mute_shortcut)
 
-        fullscreen = QShortcut(QKeySequence(Qt.Key.Key_F), self)
-        fullscreen.setContext(Qt.ShortcutContext.ApplicationShortcut)
+        fullscreen = QShortcut(QKeySequence(Qt.Key.Key_F), self.video_widget)
+        # fullscreen.setContext(Qt.ShortcutContext.ApplicationShortcut)
         fullscreen.activated.connect(toggle_fullscreen)
 
     def place_widgets(self):
