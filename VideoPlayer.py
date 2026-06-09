@@ -39,22 +39,28 @@ class VideoPlayer(QMainWindow):
     def __init__(self, initial_file=None) -> None:
         super().__init__()
 
-        self.widgets: dict[str, QWidget] = {}
-
         self.init_window()
-        self.init_player()
 
-        self.init_menu_bar()
-
-        self.init_playback_button()
-        self.init_playback_bar_widget()
-        self.init_audio_widget()
+        # Create widgets
+        self.init_media_player()
+        self.init_playback_buttons_widget()
+        self.init_playback_slider_widget()
+        self.init_volume_slider_widget()
         self.init_playback_speed_widget()
 
         self.place_widgets()
 
+        # Setup menu bar.
+        self.menu_bar = self.menuBar()
+        if self.menu_bar is None:
+            return
+        self.init_menu_bar_file()
+        self.init_menu_bar_settings()
+        self.init_menu_bar_debug()
+
         self.init_shortcuts()
 
+        # Plays video if opened using app - not working?
         if initial_file:
             self.media_player.setSource(QUrl.fromLocalFile(initial_file))
             self.playback_button.click()
@@ -66,17 +72,6 @@ class VideoPlayer(QMainWindow):
         icon_path = resource_path("icon.ico")
 
         self.setWindowIcon(QIcon(icon_path))
-
-    def init_menu_bar(self):
-        menu_bar = self.menuBar()
-        if menu_bar is None:
-            return
-
-        self.menu_bar = menu_bar
-
-        self.init_menu_bar_file()
-        self.init_menu_bar_settings()
-        self.init_menu_bar_debug()
 
     def init_menu_bar_file(self):
         def open_file():
@@ -161,7 +156,7 @@ class VideoPlayer(QMainWindow):
 
         settings_menu.addAction(free_resize)
 
-    def init_player(self):
+    def init_media_player(self):
         self.media_player = QMediaPlayer()
 
         self.audio_output = QAudioOutput()
@@ -172,7 +167,7 @@ class VideoPlayer(QMainWindow):
 
         self.media_player.setVideoOutput(self.video_widget)
 
-    def init_playback_button(self):
+    def init_playback_buttons_widget(self):
         def set_playback():
             if self.media_player.duration() == 0:
                 self.playback_button.setText("Play")
@@ -200,23 +195,23 @@ class VideoPlayer(QMainWindow):
             SECOND = 1000
             self.media_player.setPosition(self.media_player.position() - SECOND * 15)
 
-        playback_button = QPushButton()
-        playback_button.setText("Play")
-        playback_button.clicked.connect(set_playback)
-        playback_button.setFixedSize(QSize(100, 30))
-        self.playback_button = playback_button
+        pause_button = QPushButton()
+        pause_button.setText("Play")
+        pause_button.clicked.connect(set_playback)
+        pause_button.setFixedSize(QSize(100, 30))
+        self.playback_button = pause_button
 
-        advance_button = QPushButton()
-        advance_button.setText("+15")
-        advance_button.setFixedSize(QSize(40, 30))
-        advance_button.clicked.connect(skip_forward)
-        self.advance_button = advance_button
+        seek_forward_button = QPushButton()
+        seek_forward_button.setText("+15")
+        seek_forward_button.setFixedSize(QSize(40, 30))
+        seek_forward_button.clicked.connect(skip_forward)
+        self.advance_button = seek_forward_button
 
-        regress_button = QPushButton()
-        regress_button.setText("-15")
-        regress_button.setFixedSize(QSize(40, 30))
-        regress_button.clicked.connect(skip_backward)
-        self.regress_button = regress_button
+        seek_backward_button = QPushButton()
+        seek_backward_button.setText("-15")
+        seek_backward_button.setFixedSize(QSize(40, 30))
+        seek_backward_button.clicked.connect(skip_backward)
+        self.regress_button = seek_backward_button
 
         layout = QGridLayout()
         container = QWidget()
@@ -224,11 +219,11 @@ class VideoPlayer(QMainWindow):
         container.setMaximumHeight(40)
         self.play_button_widget = container
 
-        layout.addWidget(regress_button, 0, 0, Qt.AlignmentFlag.AlignRight)
-        layout.addWidget(playback_button, 0, 1)
-        layout.addWidget(advance_button, 0, 2, Qt.AlignmentFlag.AlignLeft)
+        layout.addWidget(seek_backward_button, 0, 0, Qt.AlignmentFlag.AlignRight)
+        layout.addWidget(pause_button, 0, 1)
+        layout.addWidget(seek_forward_button, 0, 2, Qt.AlignmentFlag.AlignLeft)
 
-    def init_playback_bar_widget(self):
+    def init_playback_slider_widget(self):
         def on_position_change():
             self.position_slider.blockSignals(True)
             self.position_slider.setValue(self.media_player.position())
@@ -273,13 +268,13 @@ class VideoPlayer(QMainWindow):
         container = QWidget()
         container.setLayout(layout)
         container.setMaximumHeight(35)
-        self.play_back_bar_widget = container
+        self.play_back_slider_widget = container
 
         layout.addWidget(playback_position, 0, 0)
         layout.addWidget(slider, 0, 1)
         layout.addWidget(playback_duration, 0, 2)
 
-    def init_audio_widget(self):
+    def init_volume_slider_widget(self):
 
         volume_slider = QSlider(Qt.Orientation.Horizontal)
         volume_slider.setRange(0, 100)
@@ -316,6 +311,10 @@ class VideoPlayer(QMainWindow):
         speed_slider.setRange(25, 200)
         speed_slider.setValue(100)
         speed_slider.setFixedWidth(75)
+
+        # Moves slider 25 at time with mouse wheel.
+        speed_slider.setSingleStep(25)
+        speed_slider.setPageStep(25)
 
         speed_slider.valueChanged.connect(
             lambda: self.media_player.setPlaybackRate(speed_slider.value() / 100)
@@ -354,7 +353,6 @@ class VideoPlayer(QMainWindow):
         def toggle_fullscreen():
             if self.video_widget.isFullScreen():
                 self.video_widget.setFullScreen(False)
-
                 self.show()
 
                 centeral_widget = self.centralWidget()
@@ -369,14 +367,11 @@ class VideoPlayer(QMainWindow):
 
             else:
                 self.video_widget.setParent(None)
-
                 self.hide()
 
                 screen = self.windowHandle().screen()
-
-                self.video_widget.show()
-
                 self.video_widget.windowHandle().setScreen(screen)
+                self.video_widget.show()
                 self.video_widget.showFullScreen()
 
         pause = QShortcut(QKeySequence(Qt.Key.Key_Space), self.video_widget)
@@ -408,7 +403,7 @@ class VideoPlayer(QMainWindow):
         self.setCentralWidget(container)
 
         layout.addWidget(self.video_widget, 0, 0, 1, 3)
-        layout.addWidget(self.play_back_bar_widget, 1, 0, 1, 3)
+        layout.addWidget(self.play_back_slider_widget, 1, 0, 1, 3)
 
         layout.addWidget(self.play_button_widget, 2, 1)
         layout.addWidget(self.volume_widget, 2, 2, Qt.AlignmentFlag.AlignRight)
