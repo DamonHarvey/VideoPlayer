@@ -1,0 +1,6 @@
+[project]
+name = "VideoPlayer"
+version = "0.1.0"
+dependencies = [
+    "PySide6"
+]
